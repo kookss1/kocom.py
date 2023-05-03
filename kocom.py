@@ -620,7 +620,7 @@ def publish_discovery(dev, sub=''):
                 'name': f'Kocom Wallpad {i}',
                 'cmd_t': "kocom/myhome/elevator/command",
                 'stat_t': "kocom/myhome/elevator/state",
-                'val_tpl': "{{ value_json.state }}",
+                'val_tpl': "{{ value_json.floor }}",
                 'pl_on': 'on',
                 'pl_off': 'off',
                 'qos': 0,
