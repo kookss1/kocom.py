@@ -39,6 +39,7 @@ type_t_dic = {'30b':'send', '30d':'ack'}
 seq_t_dic = {'c':1, 'd':2, 'e':3, 'f':4}
 device_t_dic = {'01':'wallpad', '0e':'light', '2c':'gas', '36':'thermo', '3b': 'plug', '44':'elevator', '48':'fan'}
 cmd_t_dic = {'00':'state', '01':'on', '02':'off', '3a':'query'}
+elev_dir_t_dic = {'00':'stop', '01':'down', '02':'up', '03':'done'}
 room_t_dic = {'00':'livingroom', '01':'bedroom', '02':'room1', '03':'room2', '04':'room3', '05':'room4'}
 
 type_h_dic = {v: k for k, v in type_t_dic.items()}
@@ -531,13 +532,14 @@ def packet_processor(p):
             mqttc.publish("kocom/livingroom/gas/state", json.dumps(state))
     elif p['type']=='send' and p['dest']=='elevator':
         floor = int(p['value'][2:4],16)
+        direction = elev_dir_t_dic.get(p['value'][0:2], 'unknown')
         rs485_floor = int(config.get('Elevator','rs485_floor', fallback=0))
         if rs485_floor != 0 :
-            state = {'floor': floor}
+            state = {'floor': floor, 'direction': direction}
             if rs485_floor==floor:
                 state['state'] = 'off'
         else:
-            state = {'state': 'off'}
+            state = {'state': 'off', 'direction': direction}
         logtxt='[MQTT publish|elevator] data[{}]'.format(state)
         mqttc.publish("kocom/myhome/elevator/state", json.dumps(state))
         # aa5530bc0044000100010300000000000000350d0d
