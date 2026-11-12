@@ -299,7 +299,9 @@ def light_parse(value):
 
 def fan_parse(value):
     preset_dic = {'40':'Low', '80':'Medium', 'c0':'High'}
-    state = 'off' if value[:2] == '10' else 'on' #state = 'off' if value[:2] == '00' else 'on'
+    # 0x11 = 실제 가동 중. 0x10 = 꺼짐(명령). 0x00 = 속도 설정은 남아 있으나 멈춤
+    # (전열교환기 보호정지/EFE 등). 0x10만 꺼짐으로 보면 멈춘 상태를 켜짐으로 오판한다.
+    state = 'on' if value[:2] == '11' else 'off'
     preset = 'Off' if state == 'off' else preset_dic.get(value[4:6])
     return { 'state': state, 'preset': preset}
 
