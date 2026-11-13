@@ -283,10 +283,20 @@ def parse(hex_data):
 
 
 def thermo_parse(value):
-    ret = { 'heat_mode': 'heat' if value[:2]=='11' else 'off',
+    heat_mode = 'heat' if value[:2]=='11' else 'off'
+    # value[14:16] (8번째 바이트) = 보일러 실제 가동 플래그.
+    #   01 = 불을 때는 중, 02 = 설정온도 도달해 멈춘 상태.
+    # 월패드가 직접 알려주는 값이라 '현재온도 < 설정온도' 추정보다 정확하다.
+    # 꺼져 있으면 가동 여부를 따질 필요가 없으므로 off 로 보고한다.
+    if heat_mode == 'off':
+        heat_active = 'off'
+    else:
+        heat_active = 'heating' if value[14:16] == '01' else 'idle'
+    ret = { 'heat_mode': heat_mode,
             'away': 'true' if value[2:4]=='01' else 'false',
             'set_temp': int(value[4:6], 16) if value[:2]=='11' else int(config.get('User', 'init_temp')),
-            'cur_temp': int(value[8:10], 16)}
+            'cur_temp': int(value[8:10], 16),
+            'heat_active': heat_active}
     return ret
 
 
@@ -680,6 +690,8 @@ def publish_discovery(dev, sub=''):
             'temp_stat_tpl': '{{ value_json.set_temp }}',
             'curr_temp_t': 'kocom/room/thermo/{}/state'.format(num),
             'curr_temp_tpl': '{{ value_json.cur_temp }}',
+            'act_t': 'kocom/room/thermo/{}/state'.format(num),
+            'act_tpl': '{{ value_json.heat_active }}',
             'modes': ['off', 'heat'],
             'min_temp': 20,
             'max_temp': 25,
